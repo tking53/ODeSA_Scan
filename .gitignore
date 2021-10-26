@@ -30,3 +30,6 @@
 *.exe
 *.out
 *.app
+
+# current exe name
+odesa_scan
