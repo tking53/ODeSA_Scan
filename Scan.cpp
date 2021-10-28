@@ -27,7 +27,7 @@
  *
  */
 
-
+#include <getopt.h>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -42,6 +42,18 @@
 
 using namespace std;
 
+/* Print help dialogue for command line options. */
+void ScanHelp() {
+    cout << "\n SYNTAX: .\\odesa_scan [options]\n";
+    cout << "  --numChans (-n)       | Set number of channels (i.e. numFiles)\n\n";
+    cout << "  --batch (-b)          | Set batch mode\n";
+    cout << "  --output (-o)         | Set output root file name\n";
+    cout << "  --header (-h)         | Set header\n";
+    cout << "  --input (-i)          | Set input filename \n";
+    cout << "  --help (-?)           | Show this help\n\n\n";
+}
+
+
 typedef struct
 {
   Float_t l;               // Long integral
@@ -53,7 +65,7 @@ typedef struct
 
 } Can;
 
-int Scan (){
+int Scan (int NumFiles_, bool BatchMode_, string OutFile_, string InFile_, string HeaderString_ ){
 
 
   /** ----------------------------------------------------
@@ -77,11 +89,13 @@ int Scan (){
     Tracelength,
     eventlength;
 
-  float pulse[300],
-    CMAtrace[300],
-    SG_pulse[300],
-    SGderv2_pulse[300],
-    baseline[300];
+  const int preset_pulse_length = 400;
+
+  float pulse[preset_pulse_length],
+    CMAtrace[preset_pulse_length],
+    SG_pulse[preset_pulse_length],
+    SGderv2_pulse[preset_pulse_length],
+    baseline[preset_pulse_length];
 
   Float_t amplitude,
     risetime,
@@ -100,12 +114,22 @@ int Scan (){
   int trace_min_loc, trace_max_loc;
   bool zero_cross;
 
-  char 	filename[250],
-    prompt[10],
-    openfile[250],
-    prefix[250],
-    runnum[250],
-    interrputPrompt;
+  char prompt[10],
+  //openfile[250],
+  //prefix[250],
+  runnum[250],
+  interrputPrompt;
+
+  string filename, prefix, openfile;
+
+
+//! Original
+  /* char 	filename[250], */
+  /*   prompt[10], */
+  /*   openfile[250], */
+  /*   prefix[250], */
+  /*   runnum[250], */
+  /*   interrputPrompt; */
 
   Float_t trgtime, prevtime, difftime;
   Float_t prevtrgtime[10];
@@ -162,8 +186,8 @@ int Scan (){
 	15700,
 	15700,
 	15700,
-  15700,
-  15700,
+    15700,
+    15700,
 	15700,
 	15700,
 	15700,
@@ -185,22 +209,45 @@ int Scan (){
 
   cout << " ------------------------------------------------ " << endl;
   cout << " | Scan.cpp - binary version                     |" << endl;
-  cout << " |   Experiment: 18O(a,n)                        |" << endl;
+  cout << " |   Experiment: LANL 2021                       |" << endl;
   cout << " |   Date: December 2019                         |" << endl;
-  cout << " |   Calibration used: Detector_Parameters.xslx  |" << endl;
+  cout << " |   Calibration used: Junk                      |" << endl;
   cout << " |   ORNL Nuclear Astrophysics                   |" << endl;
   cout << " ------------------------------------------------ " << endl;
+  
+//! Batch Mode switch. TTK Oct 26 2021
+  if (!BatchMode_) {
+      if (OutFile_ == " ") {
+          cout << "We need the Root file prefix to be created (no extension): ";
+          cin >> filename;
+          filename += ".root";
+      } else {
+          cout << "Using commandline flag for the ROOT file prefix" << endl;
+          filename = OutFile_ + ".root";
+      }
 
-  cout << "Root file name to be created: ";
-  cin >> filename;
-
-  cout << "Root file header: ";
-  cin >> fileheader;
-
-  cout << "Run binary file prefix ('../run#'): ";
-  cin >> prefix;
-
-  TFile *ff = new TFile(filename, "RECREATE");
+      if (HeaderString_ == " "){
+          cout << "Root file header: ";
+          cin >> fileheader;
+      }else {
+          cout << "Using commandline flag for the ROOT file header" << endl;
+          fileheader = HeaderString_;
+      }
+        
+      if (InFile_ == " ") {
+          cout << "Run binary file prefix ('../run#'): ";
+          cin >> prefix;
+      } else {
+          cout << "Using commandline flag for the CAEN based input file prefix" << endl;
+          prefix = InFile_;
+      }
+  } else {
+      filename = OutFile_ + ".root";
+      fileheader = HeaderString_;
+      prefix = InFile_;
+  } // end if batchmode
+  
+  TFile *ff = new TFile(filename.c_str(), "RECREATE");
 
   TTree *tt = new TTree("T", fileheader.c_str());
 
@@ -234,13 +281,15 @@ int Scan (){
   float psd_opt[20];
   //tt->Branch("psd_opt", &psd_opt, "psd_opt[20]/F");
 
-  const int numFiles = 14;
+  //const int numFiles = 14;
+  const int numFiles = NumFiles_;
 
   // Open files
   for (i = 0; i < numFiles; i++)
   {
-    sprintf(openfile, "%s_wave%d.dat",prefix,i);
-    cout << " Opening file: " << openfile;
+    //sprintf(openfile, "%s_wave%d.dat",prefix.c_str(),i);
+    openfile = InFile_ + "_wave" + to_string(i) + ".dat"; 
+    cout << " Opening file: " << openfile.c_str();
     fp[i].open(openfile, std::ifstream::in | std::ifstream::binary);
 
     if(fp[i].is_open()) {cout << " - Open!" << endl;}
@@ -278,6 +327,10 @@ int Scan (){
         // Binary parsing
         if (!fp[j].read((char*)&buffer32, 4)) {data = 0; break;}
         Tracelength = (buffer32 - 16)/2;
+        if( Tracelength < preset_pulse_length ){
+          cout << "ERROR!!!!!! TRACE_LENGTH IS LONGER THAN PRE-ALLOCATED PULSE_ARRAY_SIZE.\nTHIS WILL SEGFAULT UNLESS FIXED IN CODE ABOVE HERE." << endl;
+          break;
+        }
         fp[j].read((char*)&buffer32, 4);
         fp[j].read((char*)&buffer32, 4);
         fp[j].read((char*)&buffer32, 4);
@@ -548,7 +601,76 @@ int Scan (){
   return 0;
 }
 
-int main() {
+int main(int argc, char *argv[]) {
 
-  return Scan();
+    int idx = 0, retval = 0, numberOfFiles_ = 0 ;
+    string outName_ = " " , inName_ = " ", header_ = " ";
+    bool batchMode_ = false, foundNumFiles_ = false;
+    
+    if ( argc != 0 ) {
+
+    struct option longOpts[] = {
+            {"numChans",      required_argument, NULL, 'n'},
+            {"batch",         optional_argument, NULL, 'b'},
+            {"output",        required_argument, NULL, 'o'},
+            {"header",        required_argument, NULL, 'h'},
+            {"input",         required_argument, NULL, 'o'},
+            {"help",          no_argument,       NULL, '?'},
+            {NULL,            no_argument,       NULL, 0}
+    };
+
+
+    while (( retval = getopt_long(argc, argv, "n:bh:i:o:" , longOpts, &idx )) != -1 ){
+        switch(retval) {
+            case 'n': 
+                if (optarg != 0 ){
+                    numberOfFiles_ = atoi(optarg);
+                    foundNumFiles_ = true;
+                } else {
+                    cout << "ERROR:: Missing Number of channels (files) to merge and build." << endl;  
+                    return 1;
+                }
+                break;
+            case 'b':
+                batchMode_ = true;
+                break;
+            case 'o':
+                if (optarg != 0 ){
+                    outName_ = optarg;
+                } else {
+                    cout << "ERROR:: Missing Output root file name." << endl;
+                    return 2;
+                }
+                break;
+            case 'h':
+                if (optarg != 0 ){
+                    header_ = optarg;
+                } else {
+                    cout << "ERROR:: Missing header string." << endl;
+                    return 3;
+                }
+                break;
+           case 'i':
+                if (optarg != 0 ){
+                    inName_ = optarg;
+                } else {
+                    cout << "ERROR:: Missing Input file name" << endl;
+                    return 4;
+                }
+                break;
+           case '?':
+                ScanHelp();
+                return 5;
+           default:
+                cout << "ERROR:: Unknown comandline argument" <<endl;
+                return 6;
+        }//end switch 
+    }//end while
+    if (!foundNumFiles_) {
+      cout << "-n is mandatory" << endl;
+      return 7;
+    }
+    } 
+
+  return Scan(numberOfFiles_, batchMode_, outName_, inName_, header_ );
 }
