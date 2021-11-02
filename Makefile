@@ -8,14 +8,15 @@ CXXFLAGS = -pedantic
 
 ROOTFLAGS = $(shell root-config --cflags --libs) -lSpectrum
 
-TARGET = Scan.cpp
+TARGET = ODeSA_Scan.cpp
 
-OBJS = Scan.o
+OBJS = ODeSA_Scan.o
 
-OBJ = odesa_scan
+OUTPUT = odesa_scan
+
 
 $(OBJS): $(TARGET)
-	$(CXX) -o $(OBJ) $(TARGET) $(CXXFLAGS) $(ROOTFLAGS) 
+	$(CXX) -o $(OUTPUT) $(TARGET) $(CXXFLAGS) $(ROOTFLAGS) 
 
 clean:
 	-rm -f $(OBJ)
