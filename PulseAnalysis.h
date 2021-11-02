@@ -9,13 +9,16 @@
  *
  *
  *  Creation Date: 11/25/2012
- *  Last modified: 3/21/2016
+ *  Last modified: 11/02/2021 (TTK: adding include gaurds)
  *
  * -----------------------------------------------------
  * 	Nuclear Astrophysics, Physics Division
  *  Oak Ridge National Laboratory
  *
  */
+
+#ifndef ODESA_SCAN_PULSEANALYSIS_H
+#define ODESA_SCAN_PULSEANALYSIS_H
 
 #include <iostream>
 #include <fstream>
@@ -1006,3 +1009,4 @@ int PulseAnalysis::PSD_Integration_Afterpulsing (float* pulse, int length, int s
 	} else { return -1;}
 
 }
+#endif
