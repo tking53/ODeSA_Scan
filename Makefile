@@ -19,4 +19,4 @@ $(OBJS): $(TARGET)
 	$(CXX) -o $(OUTPUT) $(TARGET) $(CXXFLAGS) $(ROOTFLAGS) 
 
 clean:
-	-rm -f $(OBJ)
+	-rm -f $(OUTPUT)
