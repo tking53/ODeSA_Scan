@@ -32,4 +32,8 @@
 *.app
 
 # current exe name
-odesa_scan
+odesa_wavedump_scan*
+
+# IDE / editor folders
+vscode*
+.vscode*

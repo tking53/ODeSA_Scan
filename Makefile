@@ -4,7 +4,7 @@
 
 #For linux
 CXX = g++
-CXXFLAGS = -pedantic
+CXXFLAGS = -pedantic -g
 
 ROOTFLAGS = $(shell root-config --cflags --libs) -lSpectrum
 
@@ -12,7 +12,7 @@ TARGET = ODeSA_Scan.cpp
 
 OBJS = ODeSA_Scan.o
 
-OUTPUT = odesa_scan
+OUTPUT = odesa_wavedump_scan
 
 
 $(OBJS): $(TARGET)
