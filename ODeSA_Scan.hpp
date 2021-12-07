@@ -91,9 +91,9 @@ class ODeSA_Scan {
         cout << "  --output (-o)         | Set output root file name\n";
         cout << "  --header (-h)         | Set header\n";
         cout << "  --input (-i)          | Set input filename \n";
-        cout << "  --debug (-d)          | Set debug mode (addes traces to tree)\n\n";
+        cout << "  --debug (-d)          | Set debug mode (addes traces to tree)\n";
         cout << "  --verbose (-v)        | Sets verbose CFD errors (default = false)\n\n";
-        cout << "  --help (-?)           | Show this help\n\n\n";
+        cout << "  --help (-h)           | Show this help\n\n\n";
     }
 
     void PrintStartMessage(){
